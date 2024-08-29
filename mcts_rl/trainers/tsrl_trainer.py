@@ -169,6 +169,7 @@ class TSRLTrainer(TrainerBase):  # pylint: disable=too-many-instance-attributes
         prompt_only_dataset = PromptOnlyDataset(
             self.args.train_datasets,
             tokenizer=self.tokenizer,
+            lazy_tokenization=False,
             use_mcq=self.args.use_mcq,
             few_shot=self.args.few_shot,
             model_type=self.args.model_type,
