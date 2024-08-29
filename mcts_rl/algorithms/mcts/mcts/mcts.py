@@ -81,7 +81,7 @@ class MCTSNode(Generic[State, Action]):
         self.ref_log_probs = ref_log_probs
         self.value = value
         
-        self.N = 0
+        self.N = 0 # visit count
         self.V = 0.0
         self.Q = self.parent.V + self.r if self.parent is not None else self.r
 
@@ -194,10 +194,13 @@ class MCTS(SearchAlgorithm, Generic[State, Action]):
             return probs, selected_idx, next_action_V, next_action_Q
         return probs, next_action_V, next_action_Q
     
+    # 每一步迭代的核心函数
     def iterate(self, node: MCTSNode) -> list[MCTSNode]:
         node.N += 1
+        # depth_limit一般设为3或4，指一次select的深度，按_puct的公式平衡探索和利用，选择最大的加入path
         path = self._select(node)
         while not self._is_terminal_with_depth_limit(path[-1]):
+            # 扩展当前path的
             self._expand_and_evaluate(path[-1])
             # ### debug mode
             # if path[-1].parent is not None:
@@ -227,6 +230,7 @@ class MCTS(SearchAlgorithm, Generic[State, Action]):
         xnode = max(node.children, key=self._puct)
         return xnode
 
+    # 扩展并评估当前节点，即path[-1]
     def _expand_and_evaluate(self, node: MCTSNode):
         if node.state is None:
             node.state = self.world_model.step(node.parent.state, node.action, node.log_probs)
@@ -234,7 +238,8 @@ class MCTS(SearchAlgorithm, Generic[State, Action]):
         
         if node.is_terminal:
             return
-        
+        # action [B, Seq] 每个action是sample出的一个序列
+        # log_probs [B, Seq] 每个action的每个token对应的log_probs
         actions = self.search_config.get_actions(self.policy_model, node.state, add_kl=self.add_kl)
         
         action_batch, log_probs_batch, ref_log_probs_batch = [], [], []
@@ -279,10 +284,11 @@ class MCTS(SearchAlgorithm, Generic[State, Action]):
 
     def search(self):
         if self.root is None:
+            # 默认depth=0 value=0 这里的value相当于advantage
             self.root = MCTSNode(state=self.world_model.init_state(), action=None, parent=None, length_penalty=self.length_penalty)
         if self.output_trace_in_each_iter:
             self.trace_in_each_iter = []
-
+        # 默认配置为n_iters=64
         n_iters = self.n_iters if self.root.depth else self.n_iters * 4     # iterate more at the starting point
         for _ in trange(n_iters, disable=self.disable_tqdm, desc='MCTS iteration', leave=False):
             path = self.iterate(self.root)

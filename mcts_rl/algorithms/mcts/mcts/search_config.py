@@ -170,6 +170,7 @@ class StepLMConfig(SearchConfig):
         for _ in trange(n_actions, disable=self.disable_tqdm, desc='Expand: action generation', leave=False):
             cur_max_new_tokens = self.generation_config.max_new_tokens + (0 if self.use_mcq else 16)
             ## sample candidate steps to construct action space from LLMs with some randomness (temperature >= 0)
+            # 默认设为False 即采样生成 max_length根据不同任务从32到128不等
             if (not self.get_tp_zero) or unique_text_list or prompt.startswith(PROMPT_BEGIN):
                 cur_max_new_tokens = (self.generation_config.max_length - input_ids.size(-1)) if n_actions == 1 else cur_max_new_tokens
                 cur_max_new_tokens = max(1, min(cur_max_new_tokens, self.generation_config.max_length - input_ids.size(-1)))
@@ -199,7 +200,7 @@ class StepLMConfig(SearchConfig):
                     eos_token_id=terminators,
                     synced_gpus=True,
                 )
-            
+            # 第0维是batch，取每个生成的seq
             for seq in sequences:
                 ## get full generated text for current step
                 full_generated = self.base_tokenizer.decode(seq, 
@@ -215,6 +216,7 @@ class StepLMConfig(SearchConfig):
                     if raw_full_generated != full_generated:
                         full_generated = full_generated.rstrip() + self.base_tokenizer.eos_token
                 ## split text sequence into granular steps
+                # 根据换行符将seq分割成sentences
                 newline_flag = True
                 raw_sentences = regex.split(r'[\n]+', full_generated)
                 if len(raw_sentences) <= 1 and not self.use_code:
@@ -281,10 +283,13 @@ class StepLMConfig(SearchConfig):
                 gen_ids = gen_ids[input_ids.size(-1):]
                 if not gen_ids.size(-1):
                     continue
+                # 存储input_ids
                 sequences_list.append(gen_ids)
+                # 存储原文
                 unique_text_list.append(text)
         
         ## integrate G.T. guidance (ground-truth solutions used in SFT tuning)
+        # 基本是True
         if self.include_gt and not self.use_mcq and self.example.get('reasoning', ''):
             pre_gen = prompt.split(LLAMA3_EVAL_PROMPT_ASSISTANT)[-1] if self.model_type == 'llama3' else prompt.split(EVAL_PROMPT_ASSISTANT)[-1]
             newline_flag = True
@@ -351,6 +356,7 @@ class StepLMConfig(SearchConfig):
             else:
                 ref_log_probs = None
             results.append((gen_ids, (log_probs, ref_log_probs), embs))
+        # 在results内部计算，每次新的candidate和之前results内部的计算cos，如果有任意一个大于阈值都加入results中
         return self._filter_via_similarity(results)
 
     def _append_action(self, input_ids: torch.LongTensor, action: list[int]) -> torch.LongTensor:
@@ -395,6 +401,7 @@ class StepLMConfig(SearchConfig):
         parent_value: float = 0.0,
     ) -> list[tuple[float, bool]]:
         outputs = []
+        # state中只包含prompt和gt answer，没有sample出的actions(类似cot的解题步骤和final answer)
         input_ids, attention_mask = self._get_sequence_ids_in_path(state)
         prompt = self.base_tokenizer.decode(input_ids, skip_special_tokens=True)
         try:
@@ -410,10 +417,11 @@ class StepLMConfig(SearchConfig):
             for x in 'ABCD'
         }
         
+        # 如果不传入gt_ans，直接使用reward_model给出的reward作为score，否则会按照规则，计算answer是否正确来决定score
         @torch.no_grad()
         def _eval(eval_prompt, generated, gt_ans, device, self_eval=(not self.no_self_eval)):
             conf, correct_score = 1.0, 0.0
-            
+            # 设为True
             if self_eval:
                 if self.reward_model is not None:
                     ## if there is external reward model available for evaluation

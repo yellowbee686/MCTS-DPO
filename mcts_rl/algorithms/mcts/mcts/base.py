@@ -59,13 +59,15 @@ class TreeConstructor(ABC, Generic[State, Action, Example]):
                  world_model: WorldModel[State, Action, Example],
                  search_config: SearchConfig[State, Action, Example],
                  search_algo: SearchAlgorithm) -> None:
-        self.world_model = world_model
-        self.search_config = search_config
-        self.search_algo = search_algo
+        self.world_model = world_model  # StepLMWorldModel
+        self.search_config = search_config  # StepLMConfig
+        self.search_algo = search_algo  # MCTS
 
     def __call__(self, example: Example, node=None, **kwargs) -> HasTerminalStateAndTrace[State]:
+        # 单纯传入example
         self.world_model.update_example(example)
         self.search_config.update_example(example)
+        # 执行MCTS search
         return self.search_algo(self.world_model, 
                                 self.search_config, 
                                 root_node=node, 

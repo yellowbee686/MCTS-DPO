@@ -85,6 +85,7 @@ class MCTSTrainer(TSRLTrainer):
             search_algo=mcts_algo,
         )
     
+    # 每个mini_batch调用一次tree_constructor
     def tree_constructor(self, prompt_only_batch: PromptOnlyBatch | PromptOnlyPostBatch) -> list[dict[str, Any]]:
         """Rollout a batch of experiences."""
         input_ids = prompt_only_batch['input_ids']
@@ -239,7 +240,8 @@ class MCTSTrainer(TSRLTrainer):
         """Compute log probabilities of given sequences."""
         logits = model(input_ids, attention_mask=attention_mask).logits
         return gather_log_probabilities(logits[:, :-1], input_ids[:, 1:])
-    
+
+    # 计算dpo loss在tsrl_step中实现
     def tsrl_step(
         self, 
         prompts_list: list[torch.Tensor], 
