@@ -91,12 +91,13 @@ class PromptOnlyCollator(CollatorBase):
 
         input_ids = left_padding(input_ids, padding_value=self.pad_token_id)
         attention_mask = left_padding(attention_mask, padding_value=0)
-        print('')
+        reasoning = [sample['reasoning'] for sample in samples]
+        print(f'reasoning: {reasoning}')
         return {
             'input_ids': input_ids,  # size = (B, L)
             'attention_mask': attention_mask,  # size = (B, L)
             'answer': [sample['answer'] for sample in samples], 
-            'reasoning': [sample['reasoning'] for sample in samples], 
+            'reasoning': reasoning, 
             'answer_content': [sample['answer_content'] for sample in samples], 
         }
 
