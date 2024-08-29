@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from typing import ClassVar
 
-from datasets import load_dataset
+from datasets import load_dataset, concatenate_datasets
 from mcts_rl.utils import get_math_data, get_arithmo_data, list_to_dict, tqdm
 from mcts_rl.datasets.base import RawDataset, RawSample, jsonlines_load
 
@@ -70,7 +70,7 @@ class MathQADataset(RawDataset):
                 self.data = [vv for v in mathqa_dict.values() for vv in v]
                 # self.data = get_arithmo_data(mathqa_dict)
             else:
-                self.data = gsm8k + math
+                self.data = concatenate_datasets([gsm8k, math])
 
     def __getitem__(self, index: int) -> RawSample:
         data = self.data[index]

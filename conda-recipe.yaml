@@ -8,7 +8,7 @@ name: mcts-dpo
 channels:
   - huggingface
   - pytorch
-  - nvidia/label/cuda-11.7.1
+  - nvidia/label/cuda-12.2.1
   - defaults
   - conda-forge
 dependencies:
@@ -26,7 +26,7 @@ dependencies:
   - pip:
       - accelerate
 
-  - nvidia/label/cuda-11.7.1::cuda-toolkit = 11.7
+  - nvidia/label/cuda-12.2.1::cuda-toolkit = 12.2
 
   - optree
   - scipy
