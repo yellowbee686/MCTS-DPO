@@ -39,6 +39,9 @@ __all__ = [
 
 class PromptOnlySample(TypedDict, total=True):
     input_ids: torch.LongTensor  # size = (L,)
+    answer: str
+    reasoning: str
+    answer_content: str
 
 
 class PromptOnlyBatch(TypedDict, total=True):
@@ -88,6 +91,7 @@ class PromptOnlyCollator(CollatorBase):
 
         input_ids = left_padding(input_ids, padding_value=self.pad_token_id)
         attention_mask = left_padding(attention_mask, padding_value=0)
+        print('')
         return {
             'input_ids': input_ids,  # size = (B, L)
             'attention_mask': attention_mask,  # size = (B, L)
@@ -107,6 +111,7 @@ class PromptOnlyPostSample(TypedDict, total=True):
 class PromptOnlyPostBatch(TypedDict, total=True):
     prompts_list: list[torch.LongTensor]
     input_ids_list: list[torch.LongTensor]
+    attention_mask_list: list[torch.BoolTensor]
     answer: list[str]
     answer_content: list[str]
 
