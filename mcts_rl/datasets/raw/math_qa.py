@@ -59,11 +59,11 @@ class MathQADataset(RawDataset):
         else:
             gsm8k = load_dataset('openai/gsm8k', 'main', split=self.SPLIT, trust_remote_code=True)
             math = load_dataset('hendrycks/competition_math', split=self.SPLIT, trust_remote_code=True)
-            try:
-                arithmo = get_math_data(load_dataset('akjindal53244/Arithmo-Data', split=self.SPLIT))
-            except:
-                arithmo = get_math_data(jsonlines_load(os.path.join(DATA_DIR, 'arithmo/train.jsonl')))
             if self.TYPE == 'sft':
+                try:
+                    arithmo = get_math_data(load_dataset('akjindal53244/Arithmo-Data', split=self.SPLIT))
+                except:
+                    arithmo = get_math_data(jsonlines_load(os.path.join(DATA_DIR, 'arithmo/train.jsonl')))
                 arithmo, gsm8k, math = list_to_dict(arithmo), list_to_dict(gsm8k), list_to_dict(math)
                 ## use the corresponding training data seen in SFT
                 mathqa_dict = {k:v for k,v in arithmo.items() if k in math or k in gsm8k}
