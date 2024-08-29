@@ -44,6 +44,9 @@ class PromptOnlySample(TypedDict, total=True):
 class PromptOnlyBatch(TypedDict, total=True):
     input_ids: torch.LongTensor  # size = (B, L)
     attention_mask: torch.BoolTensor  # size = (B, L)
+    answer: list[str]
+    reasoning: list[str]
+    answer_content: list[str]
 
 
 class PromptOnlyDataset(TokenizedDataset):
