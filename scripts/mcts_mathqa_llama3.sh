@@ -15,7 +15,7 @@ ACTOR_REF_MODEL_NAME_OR_PATH="meta-llama/Meta-Llama-3-8B-Instruct"
 
 OUTPUT_DIR="MCTS-DPO/outputs/checkpoints/arithmetic/llama3-cdpo-2x2-gtsft"
 unset HOSTFILE
-ZERO_STAGE=2
+ZERO_STAGE=3
 OFFLOAD="optimizer"
 
 
