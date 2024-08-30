@@ -77,6 +77,7 @@ class MathQADataset(RawDataset):
         prompt = data['question'] if 'question' in data else data['problem']
         return RawSample(
             input=prompt,
+            reasoning=data.get('reasoning', ''),
             answer=data['solution'],
             final_answer=data.get('answer', None),
             final_answer_content=data.get('answer_content', data.get('answer', None)),
