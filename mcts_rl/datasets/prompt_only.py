@@ -63,7 +63,7 @@ class PromptOnlyDataset(TokenizedDataset):
         return {
             'input_ids': input_ids,  # size = (L,)
             'answer': raw_sample.get('final_answer', ''),     # str
-            'reasoning': raw_sample.get('answer', ''),
+            'reasoning': raw_sample.get('reasoning', ''),
             'answer_content': raw_sample.get('final_answer_content', raw_sample['final_answer'] if 'final_answer' in raw_sample else '')
         }
 
